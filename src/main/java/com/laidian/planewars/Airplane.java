@@ -3,7 +3,6 @@ package com.laidian.planewars;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Random;
 
 /**
  * @author hfb
@@ -14,7 +13,7 @@ public class Airplane extends FlyingObject implements Enemy {
     private static BufferedImage IMAGE;
     static {
         try {
-            IMAGE = ImageIO.read(FlyingObject.class.getResourceAsStream("img/airplane.png"));
+            IMAGE = ImageIO.read(FlyingObject.class.getResourceAsStream("/img/airplane.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -23,31 +22,35 @@ public class Airplane extends FlyingObject implements Enemy {
     /**
      * 飞机的移动速度
      */
-    private int speed = 2;
+    private int speed;
 
     /**
      * 构造方法初始化
      */
     public Airplane() {
-        image = IMAGE;
-        width = image.getWidth();
-        height = image.getHeight();
-        Random rand=new Random();
-        x=rand.nextInt(GamePanel.WIDTH-this.width);
-        y=-this.height;
+        this.speed = 2;
+        // 所有飞机对象使用同一张图片
+        this.image = IMAGE;
+        // 飞机的宽高就是图片的宽高
+        this.width = this.image.getWidth();
+        this.height = this.image.getHeight();
+        // 初始化坐标位置，x在窗口宽度范围内随机
+        this.x = random.nextInt(GamePanel.WIDTH - this.width);
+        this.y = -this.height;
     }
 
+    @Override
     public int getScore() {
-        return 0;
+        return 5;
     }
 
     @Override
     public void step() {
-
+        this.y += this.speed;
     }
 
     @Override
     public boolean outOfBounds() {
-        return false;
+        return this.y > GamePanel.HEIGHT;
     }
 }

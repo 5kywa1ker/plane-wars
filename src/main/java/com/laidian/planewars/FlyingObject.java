@@ -1,12 +1,14 @@
 package com.laidian.planewars;
 
 import java.awt.image.BufferedImage;
+import java.util.Random;
 
 /**
  * @author hfb
  * @date 2018/10/25
  */
 public abstract class FlyingObject {
+    static Random random=new Random();
 
     /**
      * 飞行物体的图片
