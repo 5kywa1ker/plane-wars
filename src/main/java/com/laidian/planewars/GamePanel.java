@@ -87,12 +87,15 @@ public class GamePanel extends JPanel {
      */
     @Override
     public void paint(Graphics g) {
-        g.drawImage(background, 0, 0, null);
-        paintHero(g);
-        paintFlyingObjects(g);
-        paintBullets(g);
-        paintScoreAndLife(g);
-        paintState(g);
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,RenderingHints.VALUE_STROKE_DEFAULT);
+        g2d.drawImage(background, 0, 0, null);
+        paintHero(g2d);
+        paintFlyingObjects(g2d);
+        paintBullets(g2d);
+        paintScoreAndLife(g2d);
+        paintState(g2d);
     }
 
     /**
@@ -132,8 +135,8 @@ public class GamePanel extends JPanel {
      * @param g
      */
     private void paintScoreAndLife(Graphics g) {
-        g.setColor(new Color(0xFF0000));
-        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 24));
+        g.setColor(new Color(0x696969));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
 
         g.drawString("SCORE: " + score, 10, 25);
         g.drawString("LIFE: " + hero.getLife(), 10, 45);
@@ -414,7 +417,7 @@ public class GamePanel extends JPanel {
         frame.add(game);
         frame.setSize(WIDTH,HEIGHT);
         frame.setAlwaysOnTop(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
