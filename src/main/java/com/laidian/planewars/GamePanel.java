@@ -8,8 +8,10 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author hfb
@@ -17,10 +19,9 @@ import java.util.TimerTask;
  */
 public class GamePanel extends JPanel {
     private static BufferedImage background;
-    public static BufferedImage gameover;
-    public static BufferedImage pause;
-    public static BufferedImage start;
-
+    private static BufferedImage gameover;
+    private static BufferedImage pause;
+    private static BufferedImage start;
     static {
         try {
             background = ImageIO.read(GamePanel.class.getResourceAsStream("/img/background.png"));
@@ -35,28 +36,28 @@ public class GamePanel extends JPanel {
     /**
      * 窗口宽
      */
-    public static final int WIDTH = 400;
+    static final int WIDTH = 400;
     /**
      * 窗口高
      */
-    public static final int HEIGHT = 654;
+    static final int HEIGHT = 654;
 
     /**
      * 游戏状态-启动
      */
-    public static final int START = 0;
+    private static final int START = 0;
     /**
      * 游戏状态-运行
      */
-    public static final int RUNNING = 1;
+    private static final int RUNNING = 1;
     /**
      * 游戏状态-暂停
      */
-    public static final int PAUSE = 2;
+    private static final int PAUSE = 2;
     /**
      * 游戏状态-结束
      */
-    public static final int GAME_OVER = 3;
+    private static final int GAME_OVER = 3;
 
     /**
      * 分数
@@ -74,11 +75,11 @@ public class GamePanel extends JPanel {
     /**
      * 飞行物
      */
-    private FlyingObject[] flyings = {};
+    private List<FlyingObject> flyings = new CopyOnWriteArrayList<>();
     /**
      * 子弹
      */
-    private Bullet[] bullets = {};
+    private List<Bullet> bullets = new CopyOnWriteArrayList<>();
 
     /**
      * 画对象
@@ -187,8 +188,7 @@ public class GamePanel extends JPanel {
         int rate = 40;
         if (flyEnteredIndex % rate == 0) {
             FlyingObject one = nextOne();
-            flyings = Arrays.copyOf(flyings, flyings.length + 1);
-            flyings[flyings.length - 1] = one;
+            flyings.add(one);
         }
 
     }
@@ -216,8 +216,7 @@ public class GamePanel extends JPanel {
         int rate = 30;
         if (shootIndex % rate == 0) {
             Bullet[] bs = hero.shoot();
-            bullets = Arrays.copyOf(bullets, bullets.length + bs.length);
-            System.arraycopy(bs, 0, bullets, bullets.length - bs.length, bs.length);
+            bullets.addAll(Arrays.asList(bs));
         }
     }
 
@@ -225,26 +224,16 @@ public class GamePanel extends JPanel {
      * 越界检测
      */
     public void outOfBoundsAction() {
-        int index = 0;
-        FlyingObject[] flyingLives = new FlyingObject[flyings.length];
-
         for (FlyingObject f : flyings) {
-            if (!f.outOfBounds()) {
-                flyingLives[index] = f;
-                index++;
+            if (f.outOfBounds()) {
+                flyings.remove(f);
             }
         }
-        flyings = Arrays.copyOf(flyingLives, index);
-
-        index = 0;
-        Bullet[] bulletLives = new Bullet[bullets.length];
         for (Bullet b : bullets) {
-            if (!b.outOfBounds()) {
-                bulletLives[index] = b;
-                index++;
+            if (b.outOfBounds()) {
+                bullets.remove(b);
             }
         }
-        bullets = Arrays.copyOf(bulletLives, index);
     }
 
     /**
@@ -262,24 +251,22 @@ public class GamePanel extends JPanel {
      * @param b 子弹
      */
     public void bang(Bullet b) {
-        //存储被撞敌人的下标
-        int index = -1;
-        for (int i = 0; i < flyings.length; i++) {
-            FlyingObject f = flyings[i];
-            if (f.shootBy(b)) {
-                //记录敌人的下标
-                index = i;
+        FlyingObject shooted = null;
+        for (FlyingObject flying : flyings) {
+            if (flying.shootBy(b)){
+                shooted = flying;
+                flyings.remove(shooted);
+                bullets.remove(b);
                 break;
             }
         }
-        if (index != -1) {
-            FlyingObject one = flyings[index];
-            if (one instanceof Enemy) {
-                Enemy e = (Enemy) one;
+        if (shooted != null) {
+            if (shooted instanceof Enemy) {
+                Enemy e = (Enemy) shooted;
                 score += e.getScore();
             }
-            if (one instanceof Award) {
-                Award a = (Award) one;
+            if (shooted instanceof Award) {
+                Award a = (Award) shooted;
                 int type = a.getType();
                 switch (type) {
                     case Award.AWARD_TYPE_DOUBLE_FIRE:
@@ -292,12 +279,6 @@ public class GamePanel extends JPanel {
                         break;
                 }
             }
-            /*将被撞敌人与数组最后一个元素交换*/
-            FlyingObject t = flyings[index];
-            flyings[index] = flyings[flyings.length - 1];
-            flyings[flyings.length - 1] = t;
-            /*缩容*/
-            flyings = Arrays.copyOf(flyings, flyings.length - 1);
         }
     }
 
@@ -316,20 +297,15 @@ public class GamePanel extends JPanel {
      * @return boolean
      */
     public boolean isGameOver() {
-        for (int i = 0; i < flyings.length; i++) {
-            FlyingObject f = flyings[i];
+        for (FlyingObject flying : flyings) {
             //相撞了
-            if (hero.hit(f)) {
+            if (hero.hit(flying)) {
                 //减命
                 hero.subtractLife();
                 // 重置火力值
                 hero.resetFire();
                 // 飞行物消失
-                FlyingObject t = flyings[i];
-                flyings[i] = flyings[flyings.length - 1];
-                flyings[flyings.length - 1] = t;
-
-                flyings = Arrays.copyOf(flyings, flyings.length - 1);
+                flyings.remove(flying);
             }
         }
         // 如果英雄的生命值为0就game over
@@ -350,15 +326,22 @@ public class GamePanel extends JPanel {
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                if (e.isMetaDown()){
+                    if (state == RUNNING){
+                        state = PAUSE;
+                        return;
+                    }
+                }
                 switch (state) {
+                    case PAUSE:
                     case START:
                         state = RUNNING;
                         break;
                     case GAME_OVER:
                         score = 0;
                         hero = new Hero();
-                        flyings = new FlyingObject[0];
-                        bullets = new Bullet[0];
+                        flyings.clear();
+                        bullets.clear();
                         state = START;
                         break;
                     default:
