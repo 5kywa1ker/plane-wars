@@ -74,12 +74,31 @@ public class GamePanel extends JPanel implements Runnable {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,RenderingHints.VALUE_STROKE_DEFAULT);
-        g2d.drawImage(background, 0, 0, null);
+
+        paintBackground(g2d);
         paintHero(g2d);
         paintFlyingObjects(g2d);
         paintBullets(g2d);
         paintScoreAndLife(g2d);
         paintState(g2d);
+    }
+
+    /**
+     * 画背景
+     * @param g
+     */
+    private void paintBackground(Graphics g) {
+        int width = this.getWidth();
+        int height = this.getHeight();
+        int m = width / background.getWidth() + 1;
+        int n = height / background.getHeight() + 1;
+        int y = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                g.drawImage(background, j*background.getWidth(), y, null);
+            }
+            y += background.getHeight();
+        }
     }
 
     /**
