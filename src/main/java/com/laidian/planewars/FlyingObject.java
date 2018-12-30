@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.util.Random;
 
 /**
+ * 所有飞行物体的父类
  * @author hfb
  * @date 2018/10/25
  */

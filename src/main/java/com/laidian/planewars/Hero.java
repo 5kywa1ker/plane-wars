@@ -40,16 +40,18 @@ public class Hero extends FlyingObject {
      */
     private long index;
 
+    private GamePanel gamePanel;
 
-    public Hero() {
+
+    public Hero(GamePanel gamePanel) {
+        this.gamePanel = gamePanel;
         this.image = IMAGES[0];
         this.images = IMAGES;
         this.width = this.image.getWidth();
         this.height = this.image.getHeight();
-
         // 初始化位置 居中
-        this.x = (GamePanel.WIDTH - this.width) / 2;
-        this.y = (GamePanel.HEIGHT - this.height) / 2;
+        this.x = (gamePanel.getWidth() - this.width) / 2;
+        this.y = (gamePanel.getHeight() - this.height) / 2 + 50;
         // 初始化3条命
         this.life = 3;
         this.fire = 1;
@@ -134,12 +136,13 @@ public class Hero extends FlyingObject {
     }
 
     /**
-     * 增加火力
-     *
+     * 设置火力
      * @param fire
      */
-    public void addFire(int fire) {
-        this.fire += fire;
+    public void setFire(int fire) {
+        if (this.fire < fire){
+            this.fire = fire;
+        }
     }
 
     /**

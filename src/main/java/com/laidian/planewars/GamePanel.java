@@ -7,17 +7,17 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.laidian.planewars.GameThread.*;
 
 /**
+ * 游戏界面
  * @author hfb
  * @date 2018/10/26
  */
-public class GamePanel extends JPanel {
+public class GamePanel extends JPanel implements Runnable {
+    private static final long serialVersionUID = -8818837110172218333L;
     private static BufferedImage background;
     private static BufferedImage gameover;
     private static BufferedImage pause;
@@ -32,54 +32,37 @@ public class GamePanel extends JPanel {
             e.printStackTrace();
         }
     }
+    /**
+     * 游戏核心线程
+     */
+    private GameThread gameThread;
 
-    /**
-     * 窗口宽
-     */
-    static final int WIDTH = 400;
-    /**
-     * 窗口高
-     */
-    static final int HEIGHT = 654;
 
-    /**
-     * 游戏状态-启动
-     */
-    private static final int START = 0;
-    /**
-     * 游戏状态-运行
-     */
-    private static final int RUNNING = 1;
-    /**
-     * 游戏状态-暂停
-     */
-    private static final int PAUSE = 2;
-    /**
-     * 游戏状态-结束
-     */
-    private static final int GAME_OVER = 3;
-
-    /**
-     * 分数
-     */
-    private int score;
-
-    /**
-     * 当前状态
-     */
-    private int state = START;
     /**
      * 英雄机
      */
-    private Hero hero = new Hero();
+    private Hero hero;
     /**
      * 飞行物
      */
-    private List<FlyingObject> flyings = new CopyOnWriteArrayList<>();
+    private List<FlyingObject> flyings;
     /**
      * 子弹
      */
-    private List<Bullet> bullets = new CopyOnWriteArrayList<>();
+    private List<Bullet> bullets;
+
+    public GamePanel(int width, int height) {
+        this.addListener();
+        this.setSize(width, height);
+        this.gameThread = new GameThread(this);
+        this.hero = gameThread.getHero();
+        this.flyings = gameThread.getFlyings();
+        this.bullets = gameThread.getBullets();
+    }
+
+    public GameThread getGameThread() {
+        return gameThread;
+    }
 
     /**
      * 画对象
@@ -107,7 +90,6 @@ public class GamePanel extends JPanel {
     private void paintHero(Graphics g) {
         g.drawImage(hero.image, hero.x, hero.y, null);
     }
-
     /**
      * 画其他飞行物体
      *
@@ -118,7 +100,6 @@ public class GamePanel extends JPanel {
             g.drawImage(f.image, f.x, f.y, null);
         }
     }
-
     /**
      * 画子弹
      *
@@ -129,7 +110,6 @@ public class GamePanel extends JPanel {
             g.drawImage(b.image, b.x, b.y, null);
         }
     }
-
     /**
      * 画分数和生命值
      *
@@ -139,17 +119,16 @@ public class GamePanel extends JPanel {
         g.setColor(new Color(0x696969));
         g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
 
-        g.drawString("SCORE: " + score, 10, 25);
+        g.drawString("SCORE: " + gameThread.getScore(), 10, 25);
         g.drawString("LIFE: " + hero.getLife(), 10, 45);
     }
-
     /**
      * 画游戏状态
      *
      * @param g
      */
     private void paintState(Graphics g) {
-        switch (state) {
+        switch (gameThread.getState()) {
             case START:
                 g.drawImage(start, 0, 0, null);
                 break;
@@ -163,161 +142,13 @@ public class GamePanel extends JPanel {
                 break;
         }
     }
-
-    /**
-     * 生成一个飞行物体
-     *
-     * @return 返回敌机或者蜜蜂
-     */
-    public FlyingObject nextOne() {
-        int type = FlyingObject.random.nextInt(20);
-        if (type == 0) {
-            return new Bee();
-        } else {
-            return new Airplane();
-        }
-    }
-
-    int flyEnteredIndex = 0;
-
-    /**
-     * 生成敌机动作
-     */
-    public void enterAction() {
-        flyEnteredIndex++;
-        int rate = 40;
-        if (flyEnteredIndex % rate == 0) {
-            FlyingObject one = nextOne();
-            flyings.add(one);
-        }
-
-    }
-
-    /**
-     * 飞行物和子弹移动
-     */
-    public void stepAction() {
-        hero.step();
-        for (FlyingObject flying : flyings) {
-            flying.step();
-        }
-        for (Bullet bullet : bullets) {
-            bullet.step();
-        }
-    }
-
-    int shootIndex = 0;
-
-    /**
-     * 射击动作
-     */
-    public void shootAction() {
-        shootIndex++;
-        int rate = 30;
-        if (shootIndex % rate == 0) {
-            Bullet[] bs = hero.shoot();
-            bullets.addAll(Arrays.asList(bs));
-        }
-    }
-
-    /**
-     * 越界检测
-     */
-    public void outOfBoundsAction() {
-        for (FlyingObject f : flyings) {
-            if (f.outOfBounds()) {
-                flyings.remove(f);
-            }
-        }
-        for (Bullet b : bullets) {
-            if (b.outOfBounds()) {
-                bullets.remove(b);
-            }
-        }
-    }
-
-    /**
-     * 子弹撞击检测
-     */
-    public void bangAction() {
-        for (Bullet b : bullets) {
-            bang(b);
-        }
-    }
-
-    /**
-     * 判断子弹是否击中敌机
-     *
-     * @param b 子弹
-     */
-    public void bang(Bullet b) {
-        FlyingObject shooted = null;
-        for (FlyingObject flying : flyings) {
-            if (flying.shootBy(b)){
-                shooted = flying;
-                flyings.remove(shooted);
-                bullets.remove(b);
-                break;
-            }
-        }
-        if (shooted != null) {
-            if (shooted instanceof Enemy) {
-                Enemy e = (Enemy) shooted;
-                score += e.getScore();
-            }
-            if (shooted instanceof Award) {
-                Award a = (Award) shooted;
-                int type = a.getType();
-                switch (type) {
-                    case Award.AWARD_TYPE_DOUBLE_FIRE:
-                        hero.addFire(2);
-                        break;
-                    case Award.AWARD_TYPE_LIFE:
-                        hero.addLife();
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-    }
-
-    /**
-     * 检测是否游戏结束
-     */
-    public void checkGameOverAction() {
-        if (isGameOver()) {
-            state = GAME_OVER;
-        }
-    }
-
-    /**
-     * 判断是否游戏结束
-     *
-     * @return boolean
-     */
-    public boolean isGameOver() {
-        for (FlyingObject flying : flyings) {
-            //相撞了
-            if (hero.hit(flying)) {
-                //减命
-                hero.subtractLife();
-                // 重置火力值
-                hero.resetFire();
-                // 飞行物消失
-                flyings.remove(flying);
-            }
-        }
-        // 如果英雄的生命值为0就game over
-        return hero.getLife() <= 0;
-    }
-
-    public void action() {
+    private void addListener() {
+        GamePanel gamePanel = this;
         MouseAdapter l = new MouseAdapter() {
             /*鼠标移动事件*/
             @Override
             public void mouseMoved(MouseEvent e) {
-                if (state == RUNNING) {
+                if (gameThread.getState() == RUNNING) {
                     int x = e.getX();
                     int y = e.getY();
                     hero.moveTo(x, y);
@@ -327,22 +158,22 @@ public class GamePanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.isMetaDown()){
-                    if (state == RUNNING){
-                        state = PAUSE;
+                    if (gameThread.getState() == RUNNING){
+                        gameThread.setState(PAUSE);
                         return;
                     }
                 }
-                switch (state) {
+                switch (gameThread.getState()) {
                     case PAUSE:
                     case START:
-                        state = RUNNING;
+                        gameThread.setState(RUNNING);
                         break;
                     case GAME_OVER:
-                        score = 0;
-                        hero = new Hero();
+                        gameThread.setScore(0);
+                        gameThread.setHero(new Hero(gamePanel));
                         flyings.clear();
                         bullets.clear();
-                        state = START;
+                        gameThread.setState(START);
                         break;
                     default:
                         break;
@@ -352,60 +183,36 @@ public class GamePanel extends JPanel {
             /*重写鼠标移出*/
             @Override
             public void mouseExited(MouseEvent e) {
-                if (state == RUNNING) {
+                if (gameThread.getState() == RUNNING) {
                     //运行状态时
                     //改为暂停状态
-                    state = PAUSE;
+                    gameThread.setState(PAUSE);
                 }
             }
 
             /*重写鼠标移入事件*/
             @Override
             public void mouseEntered(MouseEvent e) {
-                if (state == PAUSE) {
-                    state = RUNNING;
+                if (gameThread.getState() == PAUSE) {
+                    gameThread.setState(RUNNING);
                 }
             }
         };
         this.addMouseListener(l);
         this.addMouseMotionListener(l);
-        Timer timer = new Timer();
-        int interval = 10;
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (state == RUNNING) {
-                    //敌人（敌机+小蜜蜂）入场
-                    enterAction();
-                    //飞行物走一步
-                    stepAction();
-                    //子弹入场（英雄级发射子弹）
-                    shootAction();
-                    //删除越界的敌人（敌人）
-                    outOfBoundsAction();
-                    //子弹与敌人的碰撞
-                    bangAction();
-                    //英雄机与敌人相撞
-                    checkGameOverAction();
-                }
-                //重画--调用paint()方法
-                repaint();
-            }
-        }, interval, interval);
+
     }
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("飞机大战");
-        GamePanel game = new GamePanel();
-        frame.add(game);
-        frame.setSize(WIDTH,HEIGHT);
-        frame.setAlwaysOnTop(true);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        game.action();
-
+    @Override
+    public void run() {
+        while (true){
+            repaint();
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 

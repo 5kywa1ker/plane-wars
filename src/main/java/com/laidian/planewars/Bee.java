@@ -33,15 +33,18 @@ public class Bee extends FlyingObject implements Award {
      */
     private int awardType;
 
-    public Bee() {
+    private GamePanel gamePanel;
+
+    public Bee(GamePanel gamePanel) {
         this.xSpeed = 1;
         this.ySpeed = 2;
         this.image = IMAGE;
+        this.gamePanel = gamePanel;
         this.width = this.image.getWidth();
         this.height = this.image.getHeight();
-        this.x = random.nextInt(GamePanel.WIDTH - this.width);
+        this.x = random.nextInt(gamePanel.getWidth() - this.width);
         this.y = -this.height;
-        this.awardType = random.nextInt(2);
+        this.awardType = random.nextInt(3);
     }
 
     @Override
@@ -53,7 +56,7 @@ public class Bee extends FlyingObject implements Award {
     public void step() {
         this.x += this.xSpeed;
         this.y += this.ySpeed;
-        if (this.x >= GamePanel.WIDTH - this.width) {
+        if (this.x >= gamePanel.getWidth() - this.width) {
             this.xSpeed = -1;
         }
         if (this.x <= 0) {
@@ -63,6 +66,6 @@ public class Bee extends FlyingObject implements Award {
 
     @Override
     public boolean outOfBounds() {
-        return this.y > GamePanel.HEIGHT;
+        return this.y > gamePanel.getHeight();
     }
 }

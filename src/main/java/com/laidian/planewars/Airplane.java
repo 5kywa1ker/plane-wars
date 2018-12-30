@@ -5,6 +5,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 /**
+ * 敌机
+ *
  * @author hfb
  * @date 2018/10/25
  */
@@ -24,10 +26,13 @@ public class Airplane extends FlyingObject implements Enemy {
      */
     private int speed;
 
+    private GamePanel gamePanel;
+
     /**
      * 构造方法初始化
      */
-    public Airplane() {
+    public Airplane(GamePanel gamePanel) {
+        this.gamePanel = gamePanel;
         this.speed = 2;
         // 所有飞机对象使用同一张图片
         this.image = IMAGE;
@@ -35,7 +40,7 @@ public class Airplane extends FlyingObject implements Enemy {
         this.width = this.image.getWidth();
         this.height = this.image.getHeight();
         // 初始化坐标位置，x在窗口宽度范围内随机
-        this.x = random.nextInt(GamePanel.WIDTH - this.width);
+        this.x = random.nextInt(gamePanel.getWidth() - this.width);
         this.y = -this.height;
     }
 
@@ -51,6 +56,6 @@ public class Airplane extends FlyingObject implements Enemy {
 
     @Override
     public boolean outOfBounds() {
-        return this.y > GamePanel.HEIGHT;
+        return this.y > this.gamePanel.getHeight();
     }
 }
