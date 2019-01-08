@@ -194,6 +194,16 @@ public class GamePanel extends JPanel implements Runnable {
                 }
             }
 
+            // 鼠标移出暂停
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (gameThread.getState() == RUNNING) {
+                    //运行状态时
+                    //改为暂停状态
+                    gameThread.setState(PAUSE);
+                }
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 // 右击
