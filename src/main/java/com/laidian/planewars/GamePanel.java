@@ -84,21 +84,41 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     /**
+     * 平铺某张图片
+     * @param g 画笔
+     * @param image 图片
+     */
+    private void repeatImage(Graphics g, BufferedImage image) {
+        int width = this.getWidth();
+        int height = this.getHeight();
+        int m = width / image.getWidth() + 1;
+        int n = height / image.getHeight() + 1;
+        int y = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                g.drawImage(image, j*image.getWidth(), y, null);
+            }
+            y += image.getHeight();
+        }
+    }
+
+    /**
+     * 居中绘制某张图片
+     * @param g 画笔
+     * @param image 图片
+     */
+    private void centerImage(Graphics g, BufferedImage image) {
+        int x = Math.abs(image.getWidth() - this.getWidth()) / 2;
+        int y = Math.abs(image.getHeight() - this.getHeight()) / 2;
+        g.drawImage(image, x, y, null);
+    }
+
+    /**
      * 画背景
      * @param g
      */
     private void paintBackground(Graphics g) {
-        int width = this.getWidth();
-        int height = this.getHeight();
-        int m = width / background.getWidth() + 1;
-        int n = height / background.getHeight() + 1;
-        int y = 0;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < m; j++) {
-                g.drawImage(background, j*background.getWidth(), y, null);
-            }
-            y += background.getHeight();
-        }
+        repeatImage(g, background);
     }
 
     /**
@@ -136,7 +156,7 @@ public class GamePanel extends JPanel implements Runnable {
      */
     private void paintScoreAndLife(Graphics g) {
         g.setColor(new Color(0x696969));
-        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
+        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 15));
 
         g.drawString("SCORE: " + gameThread.getScore(), 10, 25);
         g.drawString("LIFE: " + hero.getLife(), 10, 45);
@@ -149,13 +169,13 @@ public class GamePanel extends JPanel implements Runnable {
     private void paintState(Graphics g) {
         switch (gameThread.getState()) {
             case START:
-                g.drawImage(start, 0, 0, null);
+                centerImage(g, start);
                 break;
             case PAUSE:
-                g.drawImage(pause, 0, 0, null);
+                repeatImage(g, pause);
                 break;
             case GAME_OVER:
-                g.drawImage(gameover, 0, 0, null);
+                repeatImage(g, gameover);
                 break;
             default:
                 break;
@@ -163,8 +183,8 @@ public class GamePanel extends JPanel implements Runnable {
     }
     private void addListener() {
         GamePanel gamePanel = this;
-        MouseAdapter l = new MouseAdapter() {
-            /*鼠标移动事件*/
+        MouseAdapter mouseAdapter = new MouseAdapter() {
+            //鼠标移动事件
             @Override
             public void mouseMoved(MouseEvent e) {
                 if (gameThread.getState() == RUNNING) {
@@ -176,49 +196,34 @@ public class GamePanel extends JPanel implements Runnable {
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                // 右击
                 if (e.isMetaDown()){
                     if (gameThread.getState() == RUNNING){
                         gameThread.setState(PAUSE);
                         return;
                     }
-                }
-                switch (gameThread.getState()) {
-                    case PAUSE:
-                    case START:
-                        gameThread.setState(RUNNING);
-                        break;
-                    case GAME_OVER:
-                        gameThread.setScore(0);
-                        gameThread.setHero(new Hero(gamePanel));
-                        flyings.clear();
-                        bullets.clear();
-                        gameThread.setState(START);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            /*重写鼠标移出*/
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (gameThread.getState() == RUNNING) {
-                    //运行状态时
-                    //改为暂停状态
-                    gameThread.setState(PAUSE);
-                }
-            }
-
-            /*重写鼠标移入事件*/
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (gameThread.getState() == PAUSE) {
-                    gameThread.setState(RUNNING);
+                }else {
+                    // 单击事件 如果是暂停或者开始，则改为运行状态，如果是游戏结束，则改为开始状态
+                    switch (gameThread.getState()) {
+                        case PAUSE:
+                        case START:
+                            gameThread.setState(RUNNING);
+                            break;
+                        case GAME_OVER:
+                            gameThread.setScore(0);
+                            gameThread.setHero(new Hero(gamePanel));
+                            flyings.clear();
+                            bullets.clear();
+                            gameThread.setState(START);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         };
-        this.addMouseListener(l);
-        this.addMouseMotionListener(l);
+        this.addMouseListener(mouseAdapter);
+        this.addMouseMotionListener(mouseAdapter);
 
     }
 
@@ -227,9 +232,10 @@ public class GamePanel extends JPanel implements Runnable {
         while (true){
             repaint();
             try {
-                Thread.sleep(10);
+                Thread.sleep(1000/70);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                break;
             }
         }
     }

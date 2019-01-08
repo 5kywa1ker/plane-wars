@@ -121,7 +121,7 @@ public class GameThread implements Runnable {
         }
     }
 
-    private int flyEnteredIndex = 0;
+    private long flyEnteredIndex = 0;
 
     /**
      * 生成敌机动作
@@ -149,14 +149,14 @@ public class GameThread implements Runnable {
         }
     }
 
-    int shootIndex = 0;
+    private long shootIndex = 0;
 
     /**
      * 射击动作
      */
     private void shootAction() {
         shootIndex++;
-        int rate = 30;
+        int rate = 20;
         if (shootIndex % rate == 0) {
             Bullet[] bs = hero.shoot();
             bullets.addAll(Arrays.asList(bs));
@@ -182,9 +182,9 @@ public class GameThread implements Runnable {
     /**
      * 子弹撞击检测
      */
-    private void bangAction() {
+    private void hitAction() {
         for (Bullet b : bullets) {
-            bang(b);
+            hitBy(b);
         }
     }
 
@@ -193,7 +193,7 @@ public class GameThread implements Runnable {
      *
      * @param b 子弹
      */
-    private void bang(Bullet b) {
+    private void hitBy(Bullet b) {
         FlyingObject shooted = null;
         for (FlyingObject flying : flyings) {
             if (flying.shootBy(b)){
@@ -275,7 +275,7 @@ public class GameThread implements Runnable {
                 //删除越界的敌人（敌人）
                 outOfBoundsAction();
                 //子弹与敌人的碰撞
-                bangAction();
+                hitAction();
                 //英雄机与敌人相撞
                 checkGameOverAction();
             }
@@ -283,6 +283,7 @@ public class GameThread implements Runnable {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                break;
             }
         }
     }

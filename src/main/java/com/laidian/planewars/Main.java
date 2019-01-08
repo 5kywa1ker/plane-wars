@@ -18,11 +18,11 @@ public class Main {
     /**
      * 窗口初始化宽
      */
-    private static final int WIDTH = 400;
+    private static final int WIDTH = 416;
     /**
      * 窗口初始化高
      */
-    private static final int HEIGHT = 654;
+    private static final int HEIGHT = 692;
 
 
     private static int poolSize = Runtime.getRuntime().availableProcessors();
@@ -31,7 +31,7 @@ public class Main {
     private static ExecutorService pool = new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(1024), threadFactory);
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         JFrame frame = new JFrame("飞机大战");
         frame.setSize(WIDTH,HEIGHT);
         frame.setAlwaysOnTop(true);
@@ -44,6 +44,5 @@ public class Main {
 
         frame.add(game);
         frame.setVisible(true);
-
     }
 }
